@@ -6,8 +6,11 @@ use std::path::Path;
 extern crate yaml_rust;
 use yaml_rust::YamlLoader;
 
-static NTHREADS: i64 = 10;
-static NITERATIONS: i64 = 5;
+static NTHREADS: i64 = 3;
+static NITERATIONS: i64 = 2;
+
+extern crate hyper;
+use hyper::client::Client;
 
 fn read_file(filepath: &str) -> String {
   // Create a path to the desired file
@@ -37,22 +40,31 @@ fn main() {
   let config_docs = YamlLoader::load_from_str(config_file.as_str()).unwrap();
   let config_doc = &config_docs[0];
 
-  let mut n_threads: i64 = NTHREADS;
-  let mut n_iterations: i64 = NITERATIONS;
+  let n_threads: i64 = match config_doc["threads"].as_i64() {
+    Some(value) => value,
+    None => {
+      println!("Invalid threads value!");
 
-  if !config_doc["threads"].is_badvalue() {
-    n_threads = config_doc["threads"].as_i64().unwrap();
-  }
+      NTHREADS
+    },
+  };
 
-  if !config_doc["iterations"].is_badvalue() {
-    n_iterations = config_doc["iterations"].as_i64().unwrap();
-  }
+  let n_iterations: i64 = match config_doc["iterations"].as_i64() {
+    Some(value) => value,
+    None => {
+      println!("Invalid iterations value!");
+
+      NITERATIONS
+    },
+  };
 
   let base_url = config_doc["base_url"].as_str().unwrap();
+  let port = config_doc["port"].as_i64().unwrap();
 
   println!("Threads {}", n_threads);
   println!("Iterations {}", n_iterations);
   println!("Base URL {}", base_url);
+  println!("Port {}", port);
 
   let benchmark_docs = YamlLoader::load_from_str(benchmark_file.as_str()).unwrap();
   let benchmark_doc = &benchmark_docs[0];
@@ -74,4 +86,10 @@ fn main() {
     // Wait for the thread to finish. Returns a result.
     let _ = child.join();
   }
+
+  let client = Client::new();
+
+  let response = client.get(base_url).send().unwrap();
+
+  println!("< status code: {}", response.status);
 }
