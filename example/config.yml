@@ -1,6 +1,6 @@
 ---
 
 threads: 'a'
-base_url: http://www.redbooth.com
+base_url: 'http://localhost:9000'
 port: 443
 iterations: 's5'
