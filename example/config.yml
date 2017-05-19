@@ -1,0 +1,6 @@
+---
+
+threads: 20
+base_url: https://www.redbooth.com
+port: 443
+iterations: 5

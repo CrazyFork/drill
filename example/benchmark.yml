@@ -1,0 +1,31 @@
+---
+
+- name: Fetch users
+  request:
+    url: /api/3/users
+
+- name: Fetch organizations
+  request:
+    url: /api/3/organizations
+
+- name: Fetch me
+  request:
+    url: /api/3/me
+  assign: foo
+
+- name: Fetch last user
+  request:
+    url: /api/3/user/{{ foo.body.id }}
+
+- name: Fetch some users
+  request:
+    url: /api/3/user/{{ item }}
+  with_items:
+    - 123
+    - 43222
+    - 223
+
+- name: Fetch some users from CSV
+  request:
+    url: /api/3/user/{{ item }}
+  with_items_from_csv: './fixtures/users.csv'
