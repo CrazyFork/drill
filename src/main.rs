@@ -11,6 +11,9 @@ use regex::Captures;
 extern crate yaml_rust;
 use yaml_rust::YamlLoader;
 
+extern crate serde_json;
+use serde_json::Value;
+
 static NTHREADS: i64 = 3;
 static NITERATIONS: i64 = 2;
 
@@ -83,6 +86,8 @@ fn main() {
 
     children.push(thread::spawn(move || {
       for _j in 0..n_iterations {
+        let mut responses:HashMap<&str, Value> = HashMap::new();
+
         let mut context = HashMap::new();
         context.insert("item", "1");
         context.insert("foo.body.id", "2");
@@ -95,16 +100,23 @@ fn main() {
 
           println!("- {}", benchmark_item["name"].as_str().unwrap());
 
-          // for cap in re.captures_iter(benchmark_item_url) {
-          //   println!("Item call? {}", &cap[1] );
-          // }
-
           let result = re.replace(benchmark_item_url, |caps: &Captures| {
+            let cap_path: Vec<&str> = caps[1].split(".").collect();
+            let cap_root = cap_path.get(0).unwrap();
+
+            println!("- cap path {}", cap_path.len() as i32);
+            println!("- cap root {}", cap_root);
+
             match context.get(&caps[1]) {
               Some(value) => value.to_string(),
               _ => {
-                println!("WARNING! Unknown '{}' variable!\n", &caps[1]);
-                "".to_string()
+                match responses.get(&caps[1]) {
+                  Some(value) => value.to_string(),
+                  _ => {
+                    println!("WARNING! Unknown '{}' variable!\n", &caps[1]);
+                    "".to_string()
+                  }
+                }
               }
             }
           });
@@ -113,9 +125,21 @@ fn main() {
 
           print!("  {} => {} : ", benchmark_item_url, final_url);
 
+          let mut data = String::new();
           let client = Client::new();
-          let response = client.get(&final_url).send().unwrap();
+          let mut response = client.get(&final_url).send().unwrap();
+
           println!("{}\n", response.status);
+
+          if benchmark_item["assign"].as_str().is_some() {
+            let assign_name = benchmark_item["assign"].as_str().unwrap();
+
+            response.read_to_string(&mut data).unwrap();
+
+            let v: Value = serde_json::from_str(&data).unwrap();
+
+            responses.insert(assign_name, v);
+          }
         }
       }
     }));
