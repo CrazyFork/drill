@@ -6,6 +6,7 @@ use std::collections::HashMap;
 
 extern crate regex;
 use regex::Regex;
+use regex::Captures;
 
 extern crate yaml_rust;
 use yaml_rust::YamlLoader;
@@ -72,7 +73,7 @@ fn main() {
   let benchmark_doc = &benchmark_docs[0];
   let benchmark = benchmark_doc.as_vec().unwrap();
 
-  println!("Request {}", benchmark.len());
+  println!("Request {}\n", benchmark.len());
 
   let mut children = vec![];
 
@@ -83,26 +84,38 @@ fn main() {
     children.push(thread::spawn(move || {
       for _j in 0..n_iterations {
         let mut context = HashMap::new();
-        context.insert("Hi", "Hola");
+        context.insert("item", "1");
+        context.insert("foo.body.id", "2");
 
         for benchmark_item in &benchmark_clone {
 
           let benchmark_item_url = benchmark_item["request"]["url"].as_str().unwrap();
-          let final_url = base_url_clone.to_string() + benchmark_item_url;
 
-          let re = Regex::new(r"\{\{(.*)\}\}").unwrap();
+          let re = Regex::new(r"\{\{ *([a-z\.]+) *\}\}").unwrap();
 
-          println!("(*) {}", benchmark_item["name"].as_str().unwrap());
-          println!("(U) {}", benchmark_item_url);
+          println!("- {}", benchmark_item["name"].as_str().unwrap());
 
-          for cap in re.captures_iter(benchmark_item_url) {
-            println!("Item call? {}", &cap[1] );
-          }
+          // for cap in re.captures_iter(benchmark_item_url) {
+          //   println!("Item call? {}", &cap[1] );
+          // }
 
+          let result = re.replace(benchmark_item_url, |caps: &Captures| {
+            match context.get(&caps[1]) {
+              Some(value) => value.to_string(),
+              _ => {
+                println!("WARNING! Unknown '{}' variable!\n", &caps[1]);
+                "".to_string()
+              }
+            }
+          });
+
+          let final_url = base_url_clone.to_string() + &result;
+
+          print!("  {} => {} : ", benchmark_item_url, final_url);
 
           let client = Client::new();
           let response = client.get(&final_url).send().unwrap();
-          println!("< status code: {}\n", response.status);
+          println!("{}\n", response.status);
         }
       }
     }));

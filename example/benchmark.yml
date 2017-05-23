@@ -2,7 +2,7 @@
 
 - name: Fetch users
   request:
-    url: /api/users
+    url: /api/users.json
 
 - name: Fetch organizations
   request:
