@@ -1,6 +1,5 @@
 ---
 
-threads: 'a'
+threads: 1
 base_url: 'http://localhost:9000'
-port: 443
-iterations: 's5'
+iterations: 1

@@ -2,24 +2,24 @@
 
 - name: Fetch users
   request:
-    url: /api/3/users
+    url: /api/users
 
 - name: Fetch organizations
   request:
-    url: /api/3/organizations
+    url: /api/organizations
 
-- name: Fetch me
+- name: Fetch account
   request:
-    url: /api/3/me
+    url: /api/account
   assign: foo
 
 - name: Fetch last user
   request:
-    url: /api/3/user/{{ foo.body.id }}
+    url: /api/users/{{ foo.body.id }}
 
 - name: Fetch some users
   request:
-    url: /api/3/user/{{ item }}
+    url: /api/users/{{ item }}
   with_items:
     - 123
     - 43222
@@ -27,5 +27,5 @@
 
 - name: Fetch some users from CSV
   request:
-    url: /api/3/user/{{ item }}
+    url: /api/users/{{ item }}
   with_items_from_csv: './fixtures/users.csv'
