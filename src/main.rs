@@ -38,14 +38,14 @@ fn warn_multiple_assign(benchmark_item: &Yaml){
 }
 
 fn main() {
-  let mut config = config::Config::new("./config.yml");
+  let config = config::Config::new("./config.yml");
 
   println!("Threads {}", config.threads);
   println!("Iterations {}", config.iterations);
   println!("Base URL {}", config.base_url);
 
-  let mut suite = benchmark::Benchmark::new("./benchmark.yml");
-  suite.execute(config.threads, config.iterations);
+  let suite = benchmark::Benchmark::new("./benchmark.yml");
+  suite.execute(config.threads, config.iterations, config.base_url);
 
 //  let mut children = vec![];
 //
