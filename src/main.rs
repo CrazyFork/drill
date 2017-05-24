@@ -4,12 +4,8 @@ use std::io::prelude::*;
 use std::path::Path;
 use std::collections::HashMap;
 
-extern crate regex;
-use regex::Regex;
-use regex::Captures;
-
 extern crate yaml_rust;
-use yaml_rust::YamlLoader;
+use yaml_rust::{YamlLoader, Yaml};
 
 extern crate serde_json;
 use serde_json::Value;
@@ -19,6 +15,11 @@ static NITERATIONS: i64 = 2;
 
 extern crate hyper;
 use hyper::client::{Client, Response};
+
+extern crate colored;
+use colored::*;
+
+mod interpolator;
 
 fn read_file(filepath: &str) -> String {
   // Create a path to the desired file
@@ -41,33 +42,47 @@ fn read_file(filepath: &str) -> String {
   content
 }
 
-fn resolve_interpolations(url:&str, context: &HashMap<&str, String>, responses: &HashMap<&str, Value>) -> String {
-  let re = Regex::new(r"\{\{ *([a-z\.]+) *\}\}").unwrap();
-  let result = re.replace(url, |caps: &Captures| {
-    // let cap_path: Vec<&str> = caps[1].split(".").collect();
-    // let cap_root = cap_path.get(0).unwrap();
-
-    match context.get(&caps[1]) {
-      Some(value) => value.to_string(),
-      _ => {
-        match responses.get(&caps[1]) {
-          Some(value) => value.to_string(),
-          _ => {
-            println!("WARNING! Unknown '{}' variable!\n", &caps[1]);
-            "".to_string()
-          }
-        }
-      }
-    }
-  });
-
-  result.to_string()
-}
-
 fn send_request(url: &str) -> Response {
   let client = Client::new();
 
   client.get(url).send().unwrap()
+}
+
+fn run_benchmark_item(base_url: &String, benchmark_item: &Yaml, context: &HashMap<&str, String>, responses: &HashMap<String, Value>) -> Response {
+  let benchmark_item_name = benchmark_item["name"].as_str().unwrap();
+
+  let benchmark_item_url = benchmark_item["request"]["url"].as_str().unwrap();
+  let result = interpolator::resolve_interpolations(benchmark_item_url, &context, &responses);
+
+  let final_url = base_url.to_string() + &result;
+
+  let response = send_request(&final_url);
+
+  println!("{:width$} {} {}", benchmark_item_name.green(), final_url.blue().bold(), response.status.to_string().yellow(), width=25);
+
+  response
+}
+
+fn add_assign_response(benchmark_item: &Yaml, response: &mut Response, responses: &mut HashMap<String, Value>) {
+  let assign = benchmark_item["assign"].as_str();
+
+  if assign.is_some() {
+    let mut data = String::new();
+
+    response.read_to_string(&mut data).unwrap();
+
+    let value: Value = serde_json::from_str(&data).unwrap();
+
+    responses.insert(assign.unwrap().to_string(), value);
+  }
+}
+
+fn warn_multiple_assign(benchmark_item: &Yaml){
+  let assign = benchmark_item["assign"].as_str();
+
+  if assign.is_some() {
+    println!("{} Assign '{}' is not supported for `with_items` statement!", "WARNING!".yellow().bold(), assign.unwrap());
+  }
 }
 
 fn main() {
@@ -115,57 +130,27 @@ fn main() {
 
     children.push(thread::spawn(move || {
       for _j in 0..n_iterations {
-        let mut responses:HashMap<&str, Value> = HashMap::new();
 
+        // Context objects
+        let mut responses:HashMap<String, Value> = HashMap::new();
         let mut context:HashMap<&str, String> = HashMap::new();
 
         for benchmark_item in &benchmark_clone {
 
-          let benchmark_item_url = benchmark_item["request"]["url"].as_str().unwrap();
-
-          println!("- {}", benchmark_item["name"].as_str().unwrap());
-
           let with_items_option = benchmark_item["with_items"].as_vec();
           if with_items_option.is_some() {
-            let with_items = with_items_option.unwrap();
-            println!("- Items: {:?}", with_items);
+            warn_multiple_assign(benchmark_item);
 
+            let with_items = with_items_option.unwrap();
             for with_item in with_items {
               context.insert("item", with_item.as_i64().unwrap().to_string());
 
-              let result = resolve_interpolations(benchmark_item_url, &context, &responses);
-
-              let final_url = base_url_clone.to_string() + &result;
-
-              print!("  -- {} => {} : ", benchmark_item_url, final_url);
-
-              let response = send_request(&final_url);
-
-              println!("{}\n", response.status);
+              run_benchmark_item(&base_url_clone, benchmark_item, &context, &responses);
             }
           } else {
-            let result = resolve_interpolations(benchmark_item_url, &context, &responses);
+            let mut response = run_benchmark_item(&base_url_clone, benchmark_item, &context, &responses);
 
-            let final_url = base_url_clone.to_string() + &result;
-
-            print!("  {} => {} : ", benchmark_item_url, final_url);
-
-            let mut response = send_request(&final_url);
-
-            println!("{}\n", response.status);
-
-            // Post process...
-            let assign = benchmark_item["assign"].as_str();
-
-            if assign.is_some() {
-              let mut data = String::new();
-
-              response.read_to_string(&mut data).unwrap();
-
-              let value: Value = serde_json::from_str(&data).unwrap();
-
-              responses.insert(assign.unwrap(), value);
-            }
+            add_assign_response(benchmark_item, &mut response, &mut responses)
           }
         }
       }
