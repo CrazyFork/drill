@@ -121,7 +121,6 @@ fn main() {
         let mut responses:HashMap<&str, Value> = HashMap::new();
 
         let mut context = HashMap::new();
-        // context.insert("item", "1");
         context.insert("foo.body.id", "2");
 
         for benchmark_item in &benchmark_clone {
@@ -133,18 +132,35 @@ fn main() {
           let with_items = benchmark_item["with_items"].as_vec();
           if with_items.is_some() {
             println!("- Items: {:?}", with_items.unwrap());
+
+            for with_item in &with_items {
+              context.insert("item", with_item.to_string());
+
+              let result = resolve_interpolations(benchmark_item_url, &context, &responses);
+
+              let final_url = base_url_clone.to_string() + &result;
+
+              print!("  {} => {} : ", benchmark_item_url, final_url);
+
+              let mut response = send_request(&final_url);
+
+              println!("{}\n", response.status);
+            }
+          } else {
+            let result = resolve_interpolations(benchmark_item_url, &context, &responses);
+
+            let final_url = base_url_clone.to_string() + &result;
+
+            print!("  {} => {} : ", benchmark_item_url, final_url);
+
+            let mut response = send_request(&final_url);
+
+            println!("{}\n", response.status);
           }
 
-          let result = resolve_interpolations(benchmark_item_url, &context, &responses);
 
-          let final_url = base_url_clone.to_string() + &result;
 
-          print!("  {} => {} : ", benchmark_item_url, final_url);
-
-          let mut response = send_request(&final_url);
-
-          println!("{}\n", response.status);
-
+          // Post process...
           let assign = benchmark_item["assign"].as_str();
 
           if assign.is_some() {
