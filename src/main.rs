@@ -7,9 +7,6 @@ use yaml_rust::{YamlLoader, Yaml};
 extern crate serde_json;
 use serde_json::Value;
 
-extern crate hyper;
-use hyper::client::{Client, Response};
-
 extern crate colored;
 use colored::*;
 
@@ -18,40 +15,19 @@ mod interpolator;
 mod benchmark;
 mod reader;
 
-fn send_request(url: &str) -> Response {
-  let client = Client::new();
-
-  client.get(url).send().unwrap()
-}
-
-fn run_benchmark_item(base_url: &String, benchmark_item: &Yaml, context: &HashMap<&str, String>, responses: &HashMap<String, Value>) -> Response {
-  let benchmark_item_name = benchmark_item["name"].as_str().unwrap();
-
-  let benchmark_item_url = benchmark_item["request"]["url"].as_str().unwrap();
-  let result = interpolator::resolve_interpolations(benchmark_item_url, &context, &responses);
-
-  let final_url = base_url.to_string() + &result;
-
-  let response = send_request(&final_url);
-
-  println!("{:width$} {} {}", benchmark_item_name.green(), final_url.blue().bold(), response.status.to_string().yellow(), width=25);
-
-  response
-}
-
-fn add_assign_response(benchmark_item: &Yaml, response: &mut Response, responses: &mut HashMap<String, Value>) {
-  let assign = benchmark_item["assign"].as_str();
-
-  if assign.is_some() {
-    let mut data = String::new();
-
-    response.read_to_string(&mut data).unwrap();
-
-    let value: Value = serde_json::from_str(&data).unwrap();
-
-    responses.insert(assign.unwrap().to_string(), value);
-  }
-}
+// fn add_assign_response(benchmark_item: &Yaml, response: &mut Response, responses: &mut HashMap<String, Value>) {
+//   let assign = benchmark_item["assign"].as_str();
+// 
+//   if assign.is_some() {
+//     let mut data = String::new();
+// 
+//     response.read_to_string(&mut data).unwrap();
+// 
+//     let value: Value = serde_json::from_str(&data).unwrap();
+// 
+//     responses.insert(assign.unwrap().to_string(), value);
+//   }
+// }
 
 fn warn_multiple_assign(benchmark_item: &Yaml){
   let assign = benchmark_item["assign"].as_str();
@@ -62,15 +38,14 @@ fn warn_multiple_assign(benchmark_item: &Yaml){
 }
 
 fn main() {
-  let mut config2 = config::Config::new();
+  let mut config = config::Config::new("./config.yml");
 
-  println!("Threads {}", config2.threads);
-  println!("Iterations {}", config2.iterations);
-  println!("Base URL {}", config2.base_url);
+  println!("Threads {}", config.threads);
+  println!("Iterations {}", config.iterations);
+  println!("Base URL {}", config.base_url);
 
-  let mut benchmark2 = benchmark::Benchmark::new();
-  benchmark2.load();
-  benchmark2.execute(config2.threads, config2.iterations);
+  let mut suite = benchmark::Benchmark::new("./benchmark.yml");
+  suite.execute(config.threads, config.iterations);
 
 //  let mut children = vec![];
 //

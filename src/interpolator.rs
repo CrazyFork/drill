@@ -9,9 +9,9 @@ use serde_json::Value;
 extern crate colored;
 use colored::*;
 
-pub fn resolve_interpolations(url:&str, context: &HashMap<&str, String>, responses: &HashMap<String, Value>) -> String {
+pub fn resolve_interpolations(url: &String, context: &HashMap<&str, String>, responses: &HashMap<String, Value>) -> String {
   let re = Regex::new(r"\{\{ *([a-z\.]+) *\}\}").unwrap();
-  let result = re.replace(url, |caps: &Captures| {
+  let result = re.replace(url.as_str(), |caps: &Captures| {
     let cap_path: Vec<&str> = caps[1].split(".").collect();
 
     let (cap_root, cap_tail) = cap_path.split_at(1);

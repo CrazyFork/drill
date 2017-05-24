@@ -11,8 +11,8 @@ pub struct Config {
 }
 
 impl Config {
-  pub fn new() -> Config {
-    let config_file = reader::read_file("./config.yml");
+  pub fn new(path: &str) -> Config {
+    let config_file = reader::read_file(path);
 
     let config_docs = YamlLoader::load_from_str(config_file.as_str()).unwrap();
     let config_doc = &config_docs[0];
