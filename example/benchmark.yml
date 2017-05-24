@@ -25,11 +25,11 @@
   request:
     url: /api/users/{{ item }}
   with_items:
-    - 123
-    - 43222
-    - 223
+    - 70
+    - 73
+    - 75
 
-- name: Fetch some users from CSV
-  request:
-    url: /api/users/{{ item.id }}
-  with_items_from_csv: './fixtures/users.csv'
+  # - name: Fetch some users from CSV
+  #   request:
+  #     url: /api/users/{{ item.id }}
+  #   with_items_from_csv: './fixtures/users.csv'

@@ -41,14 +41,11 @@ fn read_file(filepath: &str) -> String {
   content
 }
 
-fn resolve_interpolations(url:&str, context: &HashMap<&str, &str>, responses: &HashMap<&str, Value>) -> String {
+fn resolve_interpolations(url:&str, context: &HashMap<&str, String>, responses: &HashMap<&str, Value>) -> String {
   let re = Regex::new(r"\{\{ *([a-z\.]+) *\}\}").unwrap();
   let result = re.replace(url, |caps: &Captures| {
-    let cap_path: Vec<&str> = caps[1].split(".").collect();
-    let cap_root = cap_path.get(0).unwrap();
-
-    println!("- cap path {}", cap_path.len() as i32);
-    println!("- cap root {}", cap_root);
+    // let cap_path: Vec<&str> = caps[1].split(".").collect();
+    // let cap_root = cap_path.get(0).unwrap();
 
     match context.get(&caps[1]) {
       Some(value) => value.to_string(),
@@ -120,8 +117,7 @@ fn main() {
       for _j in 0..n_iterations {
         let mut responses:HashMap<&str, Value> = HashMap::new();
 
-        let mut context = HashMap::new();
-        context.insert("foo.body.id", "2");
+        let mut context:HashMap<&str, String> = HashMap::new();
 
         for benchmark_item in &benchmark_clone {
 
@@ -129,20 +125,21 @@ fn main() {
 
           println!("- {}", benchmark_item["name"].as_str().unwrap());
 
-          let with_items = benchmark_item["with_items"].as_vec();
-          if with_items.is_some() {
-            println!("- Items: {:?}", with_items.unwrap());
+          let with_items_option = benchmark_item["with_items"].as_vec();
+          if with_items_option.is_some() {
+            let with_items = with_items_option.unwrap();
+            println!("- Items: {:?}", with_items);
 
-            for with_item in &with_items {
-              context.insert("item", with_item.to_string());
+            for with_item in with_items {
+              context.insert("item", with_item.as_i64().unwrap().to_string());
 
               let result = resolve_interpolations(benchmark_item_url, &context, &responses);
 
               let final_url = base_url_clone.to_string() + &result;
 
-              print!("  {} => {} : ", benchmark_item_url, final_url);
+              print!("  -- {} => {} : ", benchmark_item_url, final_url);
 
-              let mut response = send_request(&final_url);
+              let response = send_request(&final_url);
 
               println!("{}\n", response.status);
             }
@@ -156,21 +153,19 @@ fn main() {
             let mut response = send_request(&final_url);
 
             println!("{}\n", response.status);
-          }
 
+            // Post process...
+            let assign = benchmark_item["assign"].as_str();
 
+            if assign.is_some() {
+              let mut data = String::new();
 
-          // Post process...
-          let assign = benchmark_item["assign"].as_str();
+              response.read_to_string(&mut data).unwrap();
 
-          if assign.is_some() {
-            let mut data = String::new();
+              let value: Value = serde_json::from_str(&data).unwrap();
 
-            response.read_to_string(&mut data).unwrap();
-
-            let value: Value = serde_json::from_str(&data).unwrap();
-
-            responses.insert(assign.unwrap(), value);
+              responses.insert(assign.unwrap(), value);
+            }
           }
         }
       }
