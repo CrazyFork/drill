@@ -1,4 +1,6 @@
-use yaml_rust::{YamlLoader, Yaml};
+extern crate yaml_rust;
+use self::yaml_rust::YamlLoader;
+
 use reader;
 
 static NTHREADS: i64 = 3;

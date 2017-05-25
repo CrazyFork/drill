@@ -1,13 +1,14 @@
 use std::thread;
-use std::io::prelude::*;
 use std::collections::HashMap;
-use yaml_rust::{YamlLoader, Yaml};
+
+extern crate yaml_rust;
+use self::yaml_rust::{YamlLoader, Yaml};
 
 extern crate colored;
-use colored::*;
+use self::colored::*;
 
 extern crate serde_json;
-use serde_json::Value;
+use self::serde_json::Value;
 
 extern crate hyper;
 use self::hyper::client::{Client, Response};
@@ -34,21 +35,19 @@ impl Benchmark {
       let with_items_from_csv_option = item["with_items_from_csv"].as_str();
 
       if with_items_option.is_some() {
-        println!("Multiple");
+        let with_items = with_items_option.unwrap().clone();
 
-        let mut with_items_list: Vec<BenchmarkItem> = Vec::new();
-
-        list.extend_from_slice(&with_items_list);
+        for with_item in with_items {
+          list.push(BenchmarkItem::new(item, Some(with_item)))
+        }
       } else if with_items_from_csv_option.is_some() {
-        println!("Multiple from CSV");
+        // let with_items = with_items_option.unwrap();
 
-        let mut with_items_list: Vec<BenchmarkItem> = Vec::new();
-
-        list.extend_from_slice(&with_items_list);
-
+        // for with_item in with_items {
+        //   list.push(BenchmarkItem::new(item, None))
+        // }
       } else {
-        println!("Single");
-        list.push(BenchmarkItem::new(item));
+        list.push(BenchmarkItem::new(item, None));
       }
     }
 
@@ -68,10 +67,10 @@ impl Benchmark {
       children.push(thread::spawn(move || {
         for _j in 0..iterations {
           let mut responses:HashMap<String, Value> = HashMap::new();
-          let mut context:HashMap<&str, String> = HashMap::new();
+          let mut context:HashMap<&str, Yaml> = HashMap::new();
 
           for item in &benchmark_clone {
-            let mut response = item.execute(&base_url_clone, &context, &responses);
+            let mut response = item.execute(&base_url_clone, &mut context, &responses);
 
             self_clone.assign_response(&item, &mut response, &mut responses)
           }
@@ -104,28 +103,34 @@ impl Benchmark {
 struct BenchmarkItem {
   name: String,
   url: String,
+  pub with_item: Option<Yaml>,
   pub assign: Option<String>,
 }
 
 impl BenchmarkItem {
-  fn new(item: &Yaml) -> BenchmarkItem {
+  fn new(item: &Yaml, with_item: Option<Yaml>) -> BenchmarkItem {
     let reference: Option<&str> = item["assign"].as_str();
 
     BenchmarkItem {
       name: item["name"].as_str().unwrap().to_string(),
       url: item["request"]["url"].as_str().unwrap().to_string(),
+      with_item: with_item,
       assign: reference.map(str::to_string)
     }
   }
 
-  fn execute(&self, base_url: &String, context: &HashMap<&str, String>, responses: &HashMap<String, Value>) -> Response {
+  fn execute(&self, base_url: &String, context: &mut HashMap<&str, Yaml>, responses: &HashMap<String, Value>) -> Response {
+    if self.with_item.is_some() {
+      context.insert("item", self.with_item.clone().unwrap());
+    }
+
     let result = interpolator::resolve_interpolations(&self.url, &context, &responses);
 
     let final_url = base_url.to_string() + &result;
 
     let response = self.send_request(&final_url);
 
-    println!("{:width$} {} {}", self.name.green(), final_url.blue().bold(), response.status.to_string().yellow(), width=25);
+    println!("{:width$} {} {} {:?}", self.name.green(), final_url.blue().bold(), response.status.to_string().yellow(), self.with_item, width=25);
 
     response
   }

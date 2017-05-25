@@ -29,6 +29,14 @@
     - 73
     - 75
 
+- name: Fetch some comments
+  request:
+    url: /api/comments/{{ item.id }}
+  with_items:
+    - { id: 70 }
+    - { id: 73 }
+    - { id: 75 }
+
 - name: Fetch some users from CSV
   request:
     url: /api/users/{{ foo.body.id }}/contacts/{{ item.id }}
