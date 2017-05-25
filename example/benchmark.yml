@@ -31,5 +31,5 @@
 
 - name: Fetch some users from CSV
   request:
-    url: /api/users/{{ item.id }}
-  with_items_from_csv: './fixtures/users.csv'
+    url: /api/users/{{ foo.body.id }}/contacts/{{ item.id }}
+  with_items_from_csv: ./fixtures/users.csv

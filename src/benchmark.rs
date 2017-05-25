@@ -31,12 +31,21 @@ impl Benchmark {
 
     for item in items {
       let with_items_option = item["with_items"].as_vec();
+      let with_items_from_csv_option = item["with_items_from_csv"].as_str();
+
       if with_items_option.is_some() {
         println!("Multiple");
 
         let mut with_items_list: Vec<BenchmarkItem> = Vec::new();
 
         list.extend_from_slice(&with_items_list);
+      } else if with_items_from_csv_option.is_some() {
+        println!("Multiple from CSV");
+
+        let mut with_items_list: Vec<BenchmarkItem> = Vec::new();
+
+        list.extend_from_slice(&with_items_list);
+
       } else {
         println!("Single");
         list.push(BenchmarkItem::new(item));
