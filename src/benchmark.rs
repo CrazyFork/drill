@@ -1,4 +1,5 @@
 use std::thread;
+use std::io::prelude::*;
 use std::collections::HashMap;
 use yaml_rust::{YamlLoader, Yaml};
 
@@ -14,12 +15,13 @@ use self::hyper::client::{Client, Response};
 use interpolator;
 use reader;
 
-pub struct Benchmark<'_> {
-  list: Vec<Box<&'a BenchmarkItem>>
+#[derive(Clone)]
+pub struct Benchmark {
+  list: Vec<BenchmarkItem>
 }
 
-impl<'a> Benchmark<'a> {
-  pub fn new(path: &str) -> Benchmark<'a> {
+impl Benchmark {
+  pub fn new(path: &str) -> Benchmark {
     let benchmark_file = reader::read_file(path);
     let docs = YamlLoader::load_from_str(benchmark_file.as_str()).unwrap();
     let doc = &docs[0];
@@ -28,7 +30,17 @@ impl<'a> Benchmark<'a> {
     let mut list = Vec::new();
 
     for item in items {
-      list.push(Box::new(BenchmarkItem::new(item)));
+      let with_items_option = item["with_items"].as_vec();
+      if with_items_option.is_some() {
+        println!("Multiple");
+
+        let mut with_items_list: Vec<BenchmarkItem> = Vec::new();
+
+        list.extend_from_slice(&with_items_list);
+      } else {
+        println!("Single");
+        list.push(BenchmarkItem::new(item));
+      }
     }
 
     Benchmark{
@@ -42,6 +54,7 @@ impl<'a> Benchmark<'a> {
     for _i in 0..threads {
       let base_url_clone = base_url.to_owned();
       let benchmark_clone = self.list.clone();
+      let self_clone = self.clone();
 
       children.push(thread::spawn(move || {
         for _j in 0..iterations {
@@ -51,7 +64,7 @@ impl<'a> Benchmark<'a> {
           for item in &benchmark_clone {
             let mut response = item.execute(&base_url_clone, &context, &responses);
 
-            self.assign_response(&item, &mut response, &mut responses)
+            self_clone.assign_response(&item, &mut response, &mut responses)
           }
         }
       }));
@@ -65,30 +78,34 @@ impl<'a> Benchmark<'a> {
 
   fn assign_response(&self, item: &BenchmarkItem, response: &mut Response, responses: &mut HashMap<String, Value>) {
     if item.assign.is_some() {
-      let mut data = String::new();
+      // let mut data = String::new();
+      // let ref option = item.assign;
+      // let kaka = option.unwrap();
 
-      response.read_to_string(&mut data).unwrap();
+      // response.read_to_string(&mut data).unwrap();
 
-      let value: Value = serde_json::from_str(&data).unwrap();
+      // let value: Value = serde_json::from_str(&data).unwrap();
 
-      responses.insert(item.assign.unwrap().to_string(), value);
+      // responses.insert(kaka, value);
     }
   }
 }
 
 #[derive(Clone)]
-struct BenchmarkItem<'a> {
+struct BenchmarkItem {
   name: String,
   url: String,
-  pub assign: Option<&'static str>,
+  pub assign: Option<String>,
 }
 
-impl<'a> BenchmarkItem<'a> {
-  fn new(item: &Yaml) -> BenchmarkItem<'a> {
+impl BenchmarkItem {
+  fn new(item: &Yaml) -> BenchmarkItem {
+    let reference: Option<&str> = item["assign"].as_str();
+
     BenchmarkItem {
       name: item["name"].as_str().unwrap().to_string(),
       url: item["request"]["url"].as_str().unwrap().to_string(),
-      assign: item["assign"].as_str()
+      assign: reference.map(str::to_string)
     }
   }
 

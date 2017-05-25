@@ -15,27 +15,13 @@ mod interpolator;
 mod benchmark;
 mod reader;
 
-// fn add_assign_response(benchmark_item: &Yaml, response: &mut Response, responses: &mut HashMap<String, Value>) {
+// fn warn_multiple_assign(benchmark_item: &Yaml){
 //   let assign = benchmark_item["assign"].as_str();
 // 
 //   if assign.is_some() {
-//     let mut data = String::new();
-// 
-//     response.read_to_string(&mut data).unwrap();
-// 
-//     let value: Value = serde_json::from_str(&data).unwrap();
-// 
-//     responses.insert(assign.unwrap().to_string(), value);
+//     println!("{} Assign '{}' is not supported for `with_items` statement!", "WARNING!".yellow().bold(), assign.unwrap());
 //   }
 // }
-
-fn warn_multiple_assign(benchmark_item: &Yaml){
-  let assign = benchmark_item["assign"].as_str();
-
-  if assign.is_some() {
-    println!("{} Assign '{}' is not supported for `with_items` statement!", "WARNING!".yellow().bold(), assign.unwrap());
-  }
-}
 
 fn main() {
   let config = config::Config::new("./config.yml");
