@@ -41,6 +41,9 @@ impl Benchmark {
           list.push(BenchmarkItem::new(item, Some(with_item)))
         }
       } else if with_items_from_csv_option.is_some() {
+        let with_items_path = with_items_from_csv_option.unwrap();
+        let with_items_file = reader::read_csv_file_as_yml(with_items_path);
+
         // let with_items = with_items_option.unwrap();
 
         // for with_item in with_items {
