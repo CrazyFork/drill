@@ -1,2 +1,5 @@
-pub mod request;
-pub mod assign;
+mod request;
+mod assign;
+
+pub use self::request::Request;
+pub use self::assign::Assign;

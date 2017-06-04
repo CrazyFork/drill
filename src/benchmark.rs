@@ -37,8 +37,8 @@ impl Benchmark {
       let with_items_option = item["with_items"].as_vec();
       let with_items_from_csv_option = item["with_items_from_csv"].as_str();
 
-      println!("FCS1: {}", actions::request::Request::is_that_you(&item));
-      println!("FCS2: {}", actions::assign::Assign::is_that_you(&item));
+      println!("FCS1: {}", actions::Request::is_that_you(&item));
+      println!("FCS2: {}", actions::Assign::is_that_you(&item));
 
       if with_items_option.is_some() {
         let with_items = with_items_option.unwrap().clone();
