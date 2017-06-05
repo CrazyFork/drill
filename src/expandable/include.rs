@@ -11,13 +11,13 @@ pub fn is_that_you(item: &Yaml) -> bool{
   item["include"].as_str().is_some()
 }
 
-pub fn expand(item: &Yaml, mut list: &mut Vec<Request>) {
+pub fn expand(item: &Yaml, mut list: &mut Vec<&Runnable>) {
   let path = item["include"].as_str().unwrap();
 
   expand_from_filepath(path, &mut list);
 }
 
-pub fn expand_from_filepath(path: &str, mut list: &mut Vec<Request>) {
+pub fn expand_from_filepath(path: &str, mut list: &mut Vec<&Runnable>) {
   let benchmark_file = reader::read_file(path);
 
   let docs = YamlLoader::load_from_str(benchmark_file.as_str()).unwrap();
@@ -34,7 +34,7 @@ pub fn expand_from_filepath(path: &str, mut list: &mut Vec<Request>) {
     } else if actions::Assign::is_that_you(&item) {
       // TODO
     } else if actions::Request::is_that_you(&item){
-      list.push(actions::Request::new(item, None));
+      list.push(&actions::Request::new(item, None));
     }
   }
 }

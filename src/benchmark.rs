@@ -12,12 +12,16 @@ extern crate time;
 use expandable::include;
 use actions::{Request, Runnable};
 
+use std::rc::Rc;
+
+use std::sync::Arc;
+
 #[derive(Clone)]
-pub struct Benchmark {
-  list: Vec<Request>
+pub struct Benchmark<'a> {
+  list: Vec<&'a Runnable>
 }
 
-impl Benchmark {
+impl<'a> Benchmark<'a> {
   pub fn new(path: &str) -> Benchmark {
     let mut list = Vec::new();
 
@@ -30,17 +34,18 @@ impl Benchmark {
 
   pub fn execute(&self, threads: i64, iterations: i64, base_url: String) {
     let mut children = vec![];
+    let data = Arc::new(self.list);
 
     for _ in 0..threads {
       let base_url_clone = base_url.to_owned();
-      let mut benchmark_clone = self.list.clone();
+      let benchmark_clone = data.clone();
 
       children.push(thread::spawn(move || {
         for _ in 0..iterations {
           let mut responses:HashMap<String, Value> = HashMap::new();
           let mut context:HashMap<String, Yaml> = HashMap::new();
 
-          for mut item in &mut benchmark_clone {
+          for item in *benchmark_clone {
             item.execute(&base_url_clone, &mut context, &mut responses);
           }
         }
