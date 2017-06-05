@@ -48,18 +48,27 @@ impl Request {
       context.insert("item", self.with_item.clone().unwrap());
     }
 
-    let interpolator = interpolator::Interpolator::new(&base_url, &context, &responses);
+    let final_url;
 
-    let final_url = interpolator.resolve(&self.url);
+    // Resolve the url
+    {
+      let interpolator = interpolator::Interpolator::new(&base_url, &context, &responses);
+      final_url = interpolator.resolve(&self.url);
+    }
 
     let mut response = self.send_request(&final_url);
 
     println!("{:width$} {} {} {}{}", self.name.green(), final_url.blue().bold(), response.status.to_string().yellow(), (self.time * 1000.0).round().to_string().cyan(), "ms".cyan(), width=25);
 
-    // TODO: Solve multable borrow issue
-    // if self.assign.is_some() {
-    //   self.assign_response(&mut response, responses);
-    // }
+    if let Some(ref key) = self.assign {
+      let mut data = String::new();
+
+      response.read_to_string(&mut data).unwrap();
+
+      let value: Value = serde_json::from_str(&data).unwrap();
+
+      responses.insert(key.to_owned(), value);
+    }
   }
 
   fn send_request(&mut self, url: &str) -> Response {
@@ -76,17 +85,4 @@ impl Request {
 
     response.unwrap()
   }
-
-  // TODO: Solve multable borrow issue
-  // fn assign_response(&self, response: &mut Response, responses: &mut HashMap<String, Value>) {
-  //   let mut data = String::new();
-  //   let ref option = self.assign;
-  //   let key = option.unwrap();
-
-  //   response.read_to_string(&mut data).unwrap();
-
-  //   let value: Value = serde_json::from_str(&data).unwrap();
-
-  //   responses.insert(key, value);
-  // }
 }

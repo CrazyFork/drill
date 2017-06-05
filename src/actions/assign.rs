@@ -9,7 +9,7 @@ use self::serde_json::Value;
 #[derive(Clone)]
 pub struct Assign {
   name: String,
-  assign: Option<String>,
+  assign: String,
 }
 
 impl Assign {
@@ -18,11 +18,9 @@ impl Assign {
   }
 
   fn new(item: &Yaml, _with_item: Option<Yaml>) -> Assign {
-    let reference: Option<&str> = item["assign"].as_str();
-
     Assign {
       name: item["name"].as_str().unwrap().to_string(),
-      assign: reference.map(str::to_string)
+      assign: item["assign"].as_str().unwrap().to_string()
     }
   }
 
