@@ -3,7 +3,7 @@ use self::yaml_rust::{YamlLoader, Yaml};
 
 use expandable::{multi_request, multi_csv_request, include};
 use actions;
-use actions::Request;
+use actions::{Request, Runnable};
 
 use reader;
 

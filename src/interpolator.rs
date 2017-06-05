@@ -14,12 +14,12 @@ use self::yaml_rust::Yaml;
 
 pub struct Interpolator<'a> {
   base_url: &'a String,
-  context: &'a HashMap<&'a str, Yaml>,
+  context: &'a HashMap<String, Yaml>,
   responses: &'a HashMap<String, Value>,
 }
 
 impl<'a> Interpolator<'a> {
-  pub fn new(base_url: &'a String, context: &'a HashMap<&'a str, Yaml>, responses: &'a HashMap<String, Value>) -> Interpolator<'a> {
+  pub fn new(base_url: &'a String, context: &'a HashMap<String, Yaml>, responses: &'a HashMap<String, Value>) -> Interpolator<'a> {
     Interpolator {
       base_url: base_url,
       context: context,

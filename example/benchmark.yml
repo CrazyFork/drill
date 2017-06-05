@@ -20,11 +20,11 @@
   #  request:
   #    url: /api/users/{{ foo }}
 
-  #- name: Assign values
-  #  assign:
-  #    key: bar
-  #    value: 2
-  #
+- name: Assign values
+  assign:
+    key: bar
+    value: "2"
+
   #- name: Fetch other other user
   #  request:
   #    url: /api/users/{{ bar }}

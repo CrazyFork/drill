@@ -10,7 +10,7 @@ use self::serde_json::Value;
 extern crate time;
 
 use expandable::include;
-use actions::Request;
+use actions::{Request, Runnable};
 
 #[derive(Clone)]
 pub struct Benchmark {
@@ -38,7 +38,7 @@ impl Benchmark {
       children.push(thread::spawn(move || {
         for _ in 0..iterations {
           let mut responses:HashMap<String, Value> = HashMap::new();
-          let mut context:HashMap<&str, Yaml> = HashMap::new();
+          let mut context:HashMap<String, Yaml> = HashMap::new();
 
           for mut item in &mut benchmark_clone {
             item.execute(&base_url_clone, &mut context, &mut responses);

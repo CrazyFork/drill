@@ -17,6 +17,8 @@ extern crate time;
 
 use interpolator;
 
+use actions::Runnable;
+
 #[derive(Clone)]
 pub struct Request {
   name: String,
@@ -43,9 +45,26 @@ impl Request {
     }
   }
 
-  pub fn execute(&mut self, base_url: &String, context: &mut HashMap<&str, Yaml>, responses: &mut HashMap<String, Value>) {
+  fn send_request(&mut self, url: &str) -> Response {
+    let client = Client::new();
+    let begin = time::precise_time_s();
+
+    let response = client.get(url).send();
+
+    if let Err(e) = response {
+      panic!("Error connecting '{}': {:?}", url, e);
+    }
+
+    self.time = time::precise_time_s() - begin;
+
+    response.unwrap()
+  }
+}
+
+impl Runnable for Request {
+  fn execute(&mut self, base_url: &String, context: &mut HashMap<String, Yaml>, responses: &mut HashMap<String, Value>) {
     if self.with_item.is_some() {
-      context.insert("item", self.with_item.clone().unwrap());
+      context.insert("item".to_string(), self.with_item.clone().unwrap());
     }
 
     let final_url;
@@ -71,18 +90,4 @@ impl Request {
     }
   }
 
-  fn send_request(&mut self, url: &str) -> Response {
-    let client = Client::new();
-    let begin = time::precise_time_s();
-
-    let response = client.get(url).send();
-
-    if let Err(e) = response {
-      panic!("Error connecting '{}': {:?}", url, e);
-    }
-
-    self.time = time::precise_time_s() - begin;
-
-    response.unwrap()
-  }
 }
