@@ -17,7 +17,7 @@ impl Assign {
     item["assign"].as_hash().is_some()
   }
 
-  fn new(item: &Yaml, with_item: Option<Yaml>) -> Assign {
+  fn new(item: &Yaml, _with_item: Option<Yaml>) -> Assign {
     let reference: Option<&str> = item["assign"].as_str();
 
     Assign {
@@ -26,7 +26,7 @@ impl Assign {
     }
   }
 
-  fn execute(&mut self, base_url: &String, context: &mut HashMap<&str, Yaml>, _responses: &HashMap<String, Value>) {
+  fn execute(&mut self, _base_url: &String, context: &mut HashMap<&str, Yaml>, _responses: &HashMap<String, Value>) {
     context.insert("foo", yaml_rust::Yaml::String("bar".to_string()));
   }
 }

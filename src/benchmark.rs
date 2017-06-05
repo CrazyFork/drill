@@ -2,21 +2,14 @@ use std::thread;
 use std::collections::HashMap;
 
 extern crate yaml_rust;
-use self::yaml_rust::{YamlLoader, Yaml};
-
-extern crate colored;
-use self::colored::*;
+use self::yaml_rust::Yaml;
 
 extern crate serde_json;
 use self::serde_json::Value;
 
-extern crate hyper;
-use self::hyper::client::{Client, Response};
-
 extern crate time;
 
-use reader;
-use actions;
+use expandable;
 use actions::Request;
 
 #[derive(Clone)]
@@ -28,7 +21,7 @@ impl Benchmark {
   pub fn new(path: &str) -> Benchmark {
     let mut list = Vec::new();
 
-    actions::include::expand_from_filepath(path, &mut list);
+    expandable::include::expand_from_filepath(path, &mut list);
 
     Benchmark{
       list: list

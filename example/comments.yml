@@ -4,3 +4,5 @@
   request:
     url: /api/comments.json
 
+- name: Include subcomments
+  include: subcomments.yml

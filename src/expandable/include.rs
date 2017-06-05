@@ -1,6 +1,7 @@
 extern crate yaml_rust;
 use self::yaml_rust::{YamlLoader, Yaml};
 
+use expandable::{multi_request, multi_csv_request, include};
 use actions;
 use actions::Request;
 
@@ -24,12 +25,12 @@ pub fn expand_from_filepath(path: &str, mut list: &mut Vec<Request>) {
   let items = doc.as_vec().unwrap();
 
   for item in items {
-    if actions::multi_request::is_that_you(&item) {
-      actions::multi_request::expand(&item, &mut list);
-    } else if actions::multi_csv_request::is_that_you(&item) {
-      actions::multi_csv_request::expand(&item, &mut list);
-    } else if actions::include::is_that_you(&item) {
-      actions::include::expand(&item, &mut list);
+    if multi_request::is_that_you(&item) {
+      multi_request::expand(&item, &mut list);
+    } else if multi_csv_request::is_that_you(&item) {
+      multi_csv_request::expand(&item, &mut list);
+    } else if include::is_that_you(&item) {
+      include::expand(&item, &mut list);
     } else if actions::Assign::is_that_you(&item) {
       // TODO
     } else if actions::Request::is_that_you(&item){

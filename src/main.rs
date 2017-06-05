@@ -6,6 +6,7 @@ mod interpolator;
 mod benchmark;
 mod reader;
 mod actions;
+mod expandable;
 
 fn main() {
   let config = config::Config::new("./config.yml");
