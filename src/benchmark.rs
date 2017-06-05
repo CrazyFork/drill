@@ -9,7 +9,7 @@ use self::serde_json::Value;
 
 extern crate time;
 
-use expandable;
+use expandable::include;
 use actions::Request;
 
 #[derive(Clone)]
@@ -21,7 +21,7 @@ impl Benchmark {
   pub fn new(path: &str) -> Benchmark {
     let mut list = Vec::new();
 
-    expandable::include::expand_from_filepath(path, &mut list);
+    include::expand_from_filepath(path, &mut list);
 
     Benchmark{
       list: list

@@ -9,7 +9,7 @@ use self::serde_json::Value;
 #[derive(Clone)]
 pub struct Assign {
   name: String,
-  pub assign: Option<String>,
+  assign: Option<String>,
 }
 
 impl Assign {
