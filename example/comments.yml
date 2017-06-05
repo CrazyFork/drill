@@ -1,0 +1,6 @@
+---
+
+- name: Fetch comments
+  request:
+    url: /api/comments.json
+

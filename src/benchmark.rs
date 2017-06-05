@@ -18,10 +18,12 @@ extern crate time;
 use interpolator;
 use reader;
 use actions;
+use actions::Request;
+use expandable::Expandable;
 
 #[derive(Clone)]
 pub struct Benchmark {
-  list: Vec<BenchmarkItem>
+  list: Vec<Request>
 }
 
 impl Benchmark {
@@ -34,29 +36,16 @@ impl Benchmark {
     let mut list = Vec::new();
 
     for item in items {
-      let with_items_option = item["with_items"].as_vec();
-      let with_items_from_csv_option = item["with_items_from_csv"].as_str();
-
-      println!("Assign: {}", actions::Assign::is_that_you(&item));
-      println!("Request: {}", actions::Request::is_that_you(&item));
-      println!("MultiRequest: {}", actions::MultiRequest::is_that_you(&item));
-      println!("MultiCSVRequest: {}\n", actions::MultiCSVRequest::is_that_you(&item));
-
-      if with_items_option.is_some() {
-        let with_items = with_items_option.unwrap().clone();
-
-        for with_item in with_items {
-          list.push(BenchmarkItem::new(item, Some(with_item)))
-        }
-      } else if with_items_from_csv_option.is_some() {
-        let with_items_path = with_items_from_csv_option.unwrap();
-        let with_items_file = reader::read_csv_file_as_yml(with_items_path);
-
-        for with_item in with_items_file {
-          list.push(BenchmarkItem::new(item, Some(with_item)))
-        }
-      } else {
-        list.push(BenchmarkItem::new(item, None));
+      if actions::MultiRequest::is_that_you(&item) {
+        actions::MultiRequest::expand(&item, &mut list);
+      } else if actions::MultiCSVRequest::is_that_you(&item) {
+        actions::MultiCSVRequest::expand(&item, &mut list);
+      } else if actions::Include::is_that_you(&item) {
+        // TODO
+      } else if actions::Assign::is_that_you(&item) {
+        // TODO
+      } else if actions::Request::is_that_you(&item){
+        list.push(actions::Request::new(item, None));
       }
     }
 
@@ -68,13 +57,13 @@ impl Benchmark {
   pub fn execute(&self, threads: i64, iterations: i64, base_url: String) {
     let mut children = vec![];
 
-    for _i in 0..threads {
+    for _ in 0..threads {
       let base_url_clone = base_url.to_owned();
       let mut benchmark_clone = self.list.clone();
       let self_clone = self.clone();
 
       children.push(thread::spawn(move || {
-        for _j in 0..iterations {
+        for _ in 0..iterations {
           let mut responses:HashMap<String, Value> = HashMap::new();
           let mut context:HashMap<&str, Yaml> = HashMap::new();
 
@@ -93,7 +82,7 @@ impl Benchmark {
     }
   }
 
-  fn assign_response(&self, item: &BenchmarkItem, _response: &mut Response, _responses: &mut HashMap<String, Value>) {
+  fn assign_response(&self, item: &Request, _response: &mut Response, _responses: &mut HashMap<String, Value>) {
     if item.assign.is_some() {
       // let mut data = String::new();
       // let ref option = item.assign;
@@ -109,7 +98,7 @@ impl Benchmark {
 }
 
 #[derive(Clone)]
-struct BenchmarkItem {
+pub struct BenchmarkItem {
   name: String,
   url: String,
   time: f64,
@@ -118,7 +107,7 @@ struct BenchmarkItem {
 }
 
 impl BenchmarkItem {
-  fn new(item: &Yaml, with_item: Option<Yaml>) -> BenchmarkItem {
+  pub fn new(item: &Yaml, with_item: Option<Yaml>) -> BenchmarkItem {
     let reference: Option<&str> = item["assign"].as_str();
 
     BenchmarkItem {

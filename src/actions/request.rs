@@ -1,8 +1,7 @@
-use std::thread;
 use std::collections::HashMap;
 
 extern crate yaml_rust;
-use self::yaml_rust::{YamlLoader, Yaml};
+use self::yaml_rust::Yaml;
 
 extern crate colored;
 use self::colored::*;
@@ -16,7 +15,6 @@ use self::hyper::client::{Client, Response};
 extern crate time;
 
 use interpolator;
-use reader;
 
 #[derive(Clone)]
 pub struct Request {
@@ -32,7 +30,7 @@ impl Request {
     item["request"].as_hash().is_some()
   }
 
-  fn new(item: &Yaml, with_item: Option<Yaml>) -> Request {
+  pub fn new(item: &Yaml, with_item: Option<Yaml>) -> Request {
     let reference: Option<&str> = item["assign"].as_str();
 
     Request {
@@ -44,7 +42,7 @@ impl Request {
     }
   }
 
-  fn execute(&mut self, base_url: &String, context: &mut HashMap<&str, Yaml>, responses: &HashMap<String, Value>) -> Response {
+  pub fn execute(&mut self, base_url: &String, context: &mut HashMap<&str, Yaml>, responses: &HashMap<String, Value>) -> Response {
     if self.with_item.is_some() {
       context.insert("item", self.with_item.clone().unwrap());
     }

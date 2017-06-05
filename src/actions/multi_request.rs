@@ -1,80 +1,30 @@
-use std::thread;
-use std::collections::HashMap;
-
 extern crate yaml_rust;
-use self::yaml_rust::{YamlLoader, Yaml};
+use self::yaml_rust::Yaml;
 
-extern crate colored;
-use self::colored::*;
+use expandable;
+use self::expandable::Expandable;
 
-extern crate serde_json;
-use self::serde_json::Value;
+use actions::Request;
 
-extern crate hyper;
-use self::hyper::client::{Client, Response};
-
-extern crate time;
-
-use interpolator;
-use reader;
-
-#[derive(Clone)]
-pub struct MultiRequest {
-  name: String,
-  url: String,
-  time: f64,
-  pub with_item: Option<Yaml>,
-  pub assign: Option<String>,
-}
+pub struct MultiRequest;
 
 impl MultiRequest {
   pub fn is_that_you(item: &Yaml) -> bool{
     item["request"].as_hash().is_some() &&
     item["with_items"].as_vec().is_some()
   }
+}
 
-  fn new(item: &Yaml, with_item: Option<Yaml>) -> MultiRequest {
-    let reference: Option<&str> = item["assign"].as_str();
+impl Expandable for MultiRequest {
+  fn expand(item: &Yaml, list: &mut Vec<Request>) {
+    let with_items_option = item["with_items"].as_vec();
 
-    MultiRequest {
-      name: item["name"].as_str().unwrap().to_string(),
-      url: item["request"]["url"].as_str().unwrap().to_string(),
-      time: 0.0,
-      with_item: with_item,
-      assign: reference.map(str::to_string)
+    if with_items_option.is_some() {
+      let with_items = with_items_option.unwrap().clone();
+
+      for with_item in with_items {
+        list.push(Request::new(item, Some(with_item)))
+      }
     }
-  }
-
-  fn execute(&mut self, base_url: &String, context: &mut HashMap<&str, Yaml>, responses: &HashMap<String, Value>) -> Response {
-    if self.with_item.is_some() {
-      context.insert("item", self.with_item.clone().unwrap());
-    }
-
-    let interpolator = interpolator::Interpolator::new(&base_url, &context, &responses);
-
-    let final_url = interpolator.resolve(&self.url);
-
-    let response = self.send_request(&final_url);
-
-    // println!("{:width$} {} {} {:?}", self.name.green(), final_url.blue().bold(), response.status.to_string().yellow(), self.with_item, width=25);
-
-    println!("{:width$} {} {} {}{}", self.name.green(), final_url.blue().bold(), response.status.to_string().yellow(), (self.time * 1000.0).round().to_string().cyan(), "ms".cyan(), width=25);
-
-    response
-  }
-
-  fn send_request(&mut self, url: &str) -> Response {
-    let client = Client::new();
-    let begin = time::precise_time_s();
-
-    let response = client.get(url).send();
-
-    if let Err(e) = response {
-      panic!("Error connecting '{}': {:?}", url, e);
-    }
-
-    self.time = time::precise_time_s() - begin;
-
-    response.unwrap()
   }
 }

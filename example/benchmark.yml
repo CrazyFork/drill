@@ -1,5 +1,8 @@
 ---
 
+- name: Include comments
+  include: comments.yml
+
 - name: Fetch users
   request:
     url: /api/users.json
