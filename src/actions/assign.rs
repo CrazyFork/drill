@@ -26,6 +26,7 @@ impl Assign {
     }
   }
 
-  fn execute(&mut self, base_url: &String, context: &mut HashMap<&str, Yaml>, responses: &HashMap<String, Value>) {
+  fn execute(&mut self, base_url: &String, context: &mut HashMap<&str, Yaml>, _responses: &HashMap<String, Value>) {
+    context.insert("foo", yaml_rust::Yaml::String("bar".to_string()));
   }
 }
