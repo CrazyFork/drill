@@ -22,6 +22,8 @@ pub struct Request {
   name: String,
   url: String,
   time: f64,
+  method: String,
+  pub body: Option<String>,
   pub with_item: Option<Yaml>,
   pub assign: Option<String>,
 }
@@ -33,11 +35,21 @@ impl Request {
 
   pub fn new(item: &Yaml, with_item: Option<Yaml>) -> Request {
     let reference: Option<&str> = item["assign"].as_str();
+    let body: Option<&str> = item["request"]["body"].as_str();
+    let method;
+
+    if let Some(v) = item["request"]["method"].as_str() {
+      method = v.to_string().to_uppercase();
+    } else {
+      method = "GET".to_string()
+    }
 
     Request {
       name: item["name"].as_str().unwrap().to_string(),
       url: item["request"]["url"].as_str().unwrap().to_string(),
       time: 0.0,
+      method: method,
+      body: body.map(str::to_string),
       with_item: with_item,
       assign: reference.map(str::to_string)
     }
@@ -50,7 +62,17 @@ impl Request {
 
     let begin = time::precise_time_s();
 
-    let response = client.get(url)
+    let request;
+
+    if self.method == "GET" {
+      request = client.get(url);
+    } else if self.method == "POST" {
+      request = client.post(url).body("foo=bar&arg=0");
+    } else {
+      panic!("Unknown method '{}'", self.method);
+    }
+
+    let response = request
         .header(UserAgent(USER_AGENT.to_string()))
         .send();
 
