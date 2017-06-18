@@ -67,7 +67,7 @@ impl Request {
     if self.method == "GET" {
       request = client.get(url);
     } else if self.method == "POST" {
-      request = client.post(url).body("foo=bar&arg=0");
+      request = client.post(url).body(self.body.as_ref().unwrap());
     } else {
       panic!("Unknown method '{}'", self.method);
     }

@@ -12,10 +12,10 @@ plan:
   #    request:
   #      url: /api/users.json
   #
-  - name: Fetch organizations
-    request:
-      url: /api/organizations
-
+  #  - name: Fetch organizations
+  #    request:
+  #      url: /api/organizations
+  #
   #  - name: Fetch account
   #    request:
   #      url: /api/account
@@ -63,4 +63,4 @@ plan:
     request:
       url: /api/users
       method: POST
-      body: foo=barlol
+      body: foo=bar&arg=13
