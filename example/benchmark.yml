@@ -25,11 +25,10 @@ plan:
   #    request:
   #      url: /api/users/{{ foo.manager_id }}
   #
-  #  - name: Assign values
-  #    assign:
-  #      key: bar
-  #      value: "2"
-  #
+  - name: Assign values
+    assign:
+      key: bar
+      value: "2"
   #  - name: Fetch user from assign
   #    request:
   #      url: /api/users/{{ bar }}
@@ -59,8 +58,24 @@ plan:
   #    request:
   #      url: http://localhost:9000/api/users.json
   #
-  - name: Custom HTTP method
+  - name: Basic support for POST
     request:
       url: /api/users
       method: POST
       body: foo=bar&arg=13
+
+  #  - name: Support for POST
+  #    request:
+  #      url: /api/users
+  #      method: POST
+  #      body:
+  #        foo: bar
+  #        arg: 13
+  #
+  #  - name: Advanced support for POST
+  #    request:
+  #      url: /api/users
+  #      method: POST
+  #      body:
+  #        foo: bar
+  #        arg: {{ bar }}
