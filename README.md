@@ -1,3 +1,21 @@
+#
+* colorized output from shell
+* multi-threading with rust
+* hyper http request
+
+notes:
+* leading underscore in variable name would skip unused variable check
+
+
+阅读顺序:
+* main
+* benchmark:
+* expandable: 主要是解析 yaml 文件中的 item 到 &mut list 上
+* actions
+  * assign: excute 方法主要是去执行 assign, 将变量设置到 context hashmap 上
+  * request: excute 方法主要是去执行 http request
+
+
 # Drill
 
 Drill is a HTTP load testing application written in Rust. The main goal

@@ -2,8 +2,8 @@ use yaml_rust::YamlLoader;
 
 use reader;
 
-static NTHREADS: i64 = 3;
-static NITERATIONS: i64 = 2;
+static NTHREADS: i64 = 3; // number of threads
+static NITERATIONS: i64 = 2; //number of iterations
 
 pub struct Config {
   pub base: String,

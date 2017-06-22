@@ -1,6 +1,7 @@
 mod assign;
 mod request;
 
+//:bm, re-export variables
 pub use self::assign::Assign;
 pub use self::request::Request;
 

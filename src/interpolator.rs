@@ -45,7 +45,7 @@ impl<'a> Interpolator<'a> {
           panic!("{} Unknown 'base' variable!", "WARNING!".yellow().bold());
         },
         _ => {
-          "".to_string()
+          "".to_string() // invalid absolute url without base
         }
       }
     } else {
@@ -54,6 +54,7 @@ impl<'a> Interpolator<'a> {
   }
 
   // TODO: Refactor this function to support multiple levels
+  // 解析 url 中存在的 `{{ x.x }}` 变量
   fn resolve_responses_interpolation(&self, capture: &str) -> Option<String> {
     let cap_path: Vec<&str> = capture.split(".").collect();
 
@@ -70,6 +71,7 @@ impl<'a> Interpolator<'a> {
   }
 
   // TODO: Refactor this function to support multiple levels
+  // 解析 url 中存在的 `{{ x.x }}` 变量
   fn resolve_context_interpolation(&self, capture: &str) -> Option<String> {
     let cap_path: Vec<&str> = capture.split(".").collect();
 

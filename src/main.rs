@@ -35,8 +35,8 @@ fn main() {
                                   .short("r")
                                   .long("report")
                                   .help("Sets a report file")
-                                  .takes_value(true)
-                                  .conflicts_with("compare"))
+                                  .takes_value(true) //:bm
+                                  .conflicts_with("compare"))//:bm
                       .arg(Arg::with_name("compare")
                                   .short("c")
                                   .long("compare")
